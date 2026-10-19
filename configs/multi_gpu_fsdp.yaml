@@ -1,0 +1,35 @@
+# Full parameter/gradient/optimizer sharding (FSDP) for a model too large
+# for DDP's per-GPU full-replica memory cost. Same launch mechanics as
+# multi_gpu_ddp; Trainer picks FSDP wrapping from training.distributed_strategy.
+extends: nvidia_single_gpu
+device: cuda
+
+backbone:
+  d_model: 2048
+  n_layers: 32
+  n_heads: 32
+  n_kv_heads: 8
+  d_ff: 8192
+  moe:
+    enabled: true
+    num_experts: 8
+    num_experts_per_tok: 2
+    num_shared_experts: 1
+    aux_loss_coef: 0.01
+    every_n_layers: 2       # alternate dense/MoE MLPs rather than every layer -- a common, milder starting point
+
+training:
+  distributed_strategy: fsdp
+  batch_size: 256
+  checkpoint_dir: ./checkpoints/multi_gpu_fsdp
+  activation_checkpointing: true   # real memory pressure at this depth/width -- see BackboneConfig docs
+
+notes: >
+  FSDP wrapping is real code (Trainer._wrap_model), exercised by tests
+  only in single-process mode -- that validates the wiring, not multi-GPU
+  sharding behavior, which needs real multi-GPU hardware to observe. MoE
+  is enabled here specifically because FSDP shards each expert's
+  parameters/gradients/optimizer state across GPUs -- run
+  asterwhite.core.autosizer.estimate_memory (it accounts for every expert
+  + router, not a dense approximation) against your actual per-GPU memory
+  and world size before committing to a long run.

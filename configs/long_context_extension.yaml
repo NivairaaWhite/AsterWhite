@@ -1,0 +1,52 @@
+# Context-length extension: CONTINUES training an already-trained
+# checkpoint (via --resume or --load-base) at a longer max_seq_len than it
+# was originally pretrained at, using YaRN RoPE scaling (config.
+# RoPEScalingConfig) so the attention layers' positional signal
+# extrapolates cleanly to the new length instead of degrading the way
+# plain unscaled RoPE does past its trained range.
+#
+# This is NOT a from-scratch training profile -- rope_scaling only makes
+# sense once you already have a checkpoint trained at some original
+# length. Typical usage:
+#
+#   # 1. pretrain normally first, e.g. at nvidia_single_gpu's max_seq_len=8192
+#   python train.py pretrain --profile nvidia_single_gpu --data mycorpus/
+#
+#   # 2. continue training FROM that checkpoint at 4x the context length
+#   python train.py pretrain --profile long_context_extension \
+#       --load-base ./checkpoints/nvidia_single_gpu --data mycorpus/
+#
+# original_max_position_embeddings is left unset here deliberately -- it
+# auto-resolves to whatever max_seq_len the checkpoint you continue from
+# was actually built with (see core.attention.RotaryCache.__init__), so
+# this profile doesn't need editing to match a specific prior run.
+extends: nvidia_single_gpu
+device: cuda
+
+backbone:
+  max_seq_len: 32768         # 4x nvidia_single_gpu's 8192 -- matches rope_scaling.factor below
+  rope_scaling:
+    strategy: yarn
+    factor: 4.0
+    beta_fast: 32.0           # YaRN reference-config ramp boundaries (Peng et al. 2023)
+    beta_slow: 1.0
+
+training:
+  learning_rate: 6.0e-5       # continued pretraining: much lower LR than the original from-scratch run
+  warmup_steps: 200           # a short re-warmup, not a full fresh schedule
+  checkpoint_dir: ./checkpoints/long_context_extension
+
+inference:
+  max_total_tokens: 32768
+
+notes: >
+  A real, longer sequence still costs real memory/compute per step
+  (attention is O(seq_len) in KV-cache, O(seq_len^2) in training-time
+  compute) -- re-run asterwhite.core.autosizer.estimate_memory at the NEW
+  max_seq_len before committing, and lower batch_size/micro_batch_size
+  from nvidia_single_gpu's defaults if needed. "ntk" or "linear" are
+  cheaper-to-compute alternatives to "yarn" in rope_scaling.strategy if
+  you want to experiment (see config.RoPEScalingConfig's docstring for
+  the tradeoffs) -- yarn is the default here because it generally needs
+  the least continued-pretraining to recover full quality at the new
+  length.

@@ -1,0 +1,27 @@
+# Core
+torch>=2.2
+numpy>=1.24
+pandas>=2.0
+pyarrow>=14.0
+
+# Tokenization
+tokenizers>=0.20
+
+# Checkpoints (safe tensor serialization -- no pickle for weights)
+safetensors>=0.4
+
+# Config
+pyyaml>=6.0
+pydantic>=2.6
+
+# Hardware sizing
+psutil>=5.9
+
+# Serving API (OpenAI/Ollama/generic-compatible)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+prometheus-client>=0.20
+httpx>=0.27          # ASGI test client transport (tests/ only at runtime)
+
+# Testing
+pytest>=7.0

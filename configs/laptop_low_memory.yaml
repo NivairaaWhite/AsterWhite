@@ -1,0 +1,31 @@
+# Tier 1 (8-32GB RAM or Apple unified memory): adapter/LoRA training and
+# short-context experiments, quantized inference. Pair with
+# asterwhite.training.lora rather than full-parameter fine-tuning at this
+# tier.
+extends: base
+device: auto
+
+backbone:
+  vocab_size: 16000
+  d_model: 384
+  n_layers: 8
+  n_heads: 6
+  n_kv_heads: 2
+  d_ff: 1536
+  max_seq_len: 1024
+
+training:
+  batch_size: 4
+  micro_batch_size: 1
+  amp_dtype: fp16
+  checkpoint_dir: ./checkpoints/laptop_low_memory
+
+inference:
+  quantize: true
+  max_total_tokens: 2048
+
+notes: >
+  Full pretraining at production scale is out of budget at this tier by
+  design (spec: no single fixed full-size model claims to train on every
+  device) -- use asterwhite.core.autosizer to confirm before a long run,
+  and prefer LoRA over full fine-tuning.

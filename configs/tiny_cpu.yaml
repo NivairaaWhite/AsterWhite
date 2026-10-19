@@ -1,0 +1,33 @@
+# Tier 0/1 CPU: small enough to genuinely pretrain (not just smoke-test)
+# on a CPU-only laptop -- slow, but real end-to-end training rather than
+# a --dry-run stand-in.
+extends: base
+device: cpu
+
+backbone:
+  vocab_size: 8000
+  d_model: 256
+  n_layers: 6
+  n_heads: 8
+  n_kv_heads: 2
+  d_ff: 1024
+  max_seq_len: 512
+  ssm_state_dim: 16
+
+narrative:
+  world_state_dim: 128
+  character_dim: 64
+  plan_dim: 128
+
+training:
+  batch_size: 8
+  micro_batch_size: 2
+  amp_dtype: bf16
+  checkpoint_dir: ./checkpoints/tiny_cpu
+
+inference:
+  max_total_tokens: 1024
+
+notes: >
+  Good for validating a real (non-dry-run) data + tokenizer pipeline
+  end-to-end before renting an accelerator for a full-size run.

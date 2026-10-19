@@ -1,0 +1,42 @@
+# Tier 0 (any machine, incl. 4GB CI runners). Matches
+# AsterWhiteConfig.tiny_for_testing() exactly -- what `python train.py
+# selftest` and every --dry-run path runs. Seconds on CPU.
+extends: base
+device: cpu
+
+backbone:
+  vocab_size: 256
+  d_model: 32
+  n_layers: 4
+  n_heads: 4
+  n_kv_heads: 2
+  d_ff: 64
+  max_seq_len: 128
+  ssm_state_dim: 8
+
+narrative:
+  world_state_dim: 16
+  character_dim: 16
+  plan_dim: 16
+  working_memory_slots: 4
+  episodic_memory_capacity: 128
+  max_plan_beats: 8
+
+training:
+  batch_size: 2
+  micro_batch_size: 1
+  max_steps: 3
+  warmup_steps: 1
+  checkpoint_dir: ./checkpoints/smoke_cpu
+
+grpo:
+  group_size: 2
+  max_new_tokens: 8
+
+inference:
+  max_total_tokens: 256
+  default_max_new_tokens: 16
+
+notes: >
+  Validation/CI profile, not a real training config -- data validation,
+  tokenizer round-trips, and the bundled test suite only.

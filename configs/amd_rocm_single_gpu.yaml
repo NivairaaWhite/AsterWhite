@@ -1,0 +1,15 @@
+# Same model/training shape as nvidia_single_gpu -- ROCm reuses torch's
+# CUDA device namespace (torch.device("cuda") works; see
+# DeviceManager._cuda_is_rocm, which distinguishes ROCm from real CUDA via
+# torch.version.hip), so no numeric config values differ here, only the
+# backend label recorded in run metadata and the NCCL->gloo distributed
+# backend choice.
+extends: nvidia_single_gpu
+device: rocm
+
+training:
+  checkpoint_dir: ./checkpoints/amd_rocm_single_gpu
+
+notes: >
+  Requires a ROCm-built torch. Not hardware-validated in this repository's
+  CPU-only test environment.

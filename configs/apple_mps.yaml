@@ -1,0 +1,14 @@
+# Apple Silicon via MPS. bf16 kernel coverage on MPS is inconsistent, so
+# DeviceManager.resolve_precision downgrades bf16 -> fp16 here regardless
+# of what's requested, and logs the downgrade (never silently). NCCL/
+# distributed collectives are unavailable on MPS -- single-device only.
+extends: laptop_low_memory
+device: mps
+
+training:
+  amp_dtype: fp16
+  checkpoint_dir: ./checkpoints/apple_mps
+
+notes: >
+  Single-device only -- do not combine with multi_gpu_ddp/fsdp. See
+  DeviceManager._detect_order for backend priority.

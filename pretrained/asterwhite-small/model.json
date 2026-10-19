@@ -1,0 +1,113 @@
+{
+  "step": 2250,
+  "strategy": "export",
+  "config": {
+    "name": "AsterWhite",
+    "backbone": {
+      "vocab_size": 4096,
+      "d_model": 288,
+      "n_layers": 6,
+      "n_heads": 6,
+      "n_kv_heads": 2,
+      "d_ff": 768,
+      "max_seq_len": 512,
+      "dropout": 0.0,
+      "rope_theta": 10000.0,
+      "norm_eps": 1e-05,
+      "layer_pattern": "A",
+      "ssm_state_dim": 16,
+      "ssm_conv_kernel": 4,
+      "tie_word_embeddings": true,
+      "rope_scaling": {
+        "strategy": "none",
+        "factor": 1.0,
+        "original_max_position_embeddings": null,
+        "beta_fast": 32.0,
+        "beta_slow": 1.0,
+        "attention_factor": null
+      },
+      "moe": {
+        "enabled": false,
+        "num_experts": 8,
+        "num_experts_per_tok": 2,
+        "num_shared_experts": 1,
+        "d_ff_expert": null,
+        "aux_loss_coef": 0.01,
+        "every_n_layers": 1,
+        "router_noise_std": 0.0,
+        "capacity_factor": null
+      },
+      "qk_norm": false,
+      "mtp_n_future_tokens": 0
+    },
+    "narrative": {
+      "world_state_dim": 128,
+      "character_dim": 64,
+      "plan_dim": 128,
+      "working_memory_slots": 64,
+      "episodic_memory_capacity": 100000,
+      "max_plan_beats": 32,
+      "revision_passes": 3
+    },
+    "training": {
+      "batch_size": 8,
+      "micro_batch_size": 8,
+      "learning_rate": 0.001,
+      "weight_decay": 0.1,
+      "warmup_steps": 150,
+      "max_steps": 3000,
+      "grad_clip": 1.0,
+      "amp_dtype": "fp32",
+      "checkpoint_every": 500,
+      "checkpoint_dir": "./checkpoints/pretrained_small",
+      "log_every": 20,
+      "distributed_strategy": "ddp",
+      "activation_checkpointing": false,
+      "eval_every": 250,
+      "grad_norm_clip_report_every": 20,
+      "compile_model": false,
+      "ema_decay": null,
+      "mtp_loss_coef": 0.3,
+      "optimizer_fused": true
+    },
+    "grpo": {
+      "group_size": 8,
+      "kl_coef": 0.02,
+      "clip_eps": 0.2,
+      "learning_rate": 1e-05,
+      "max_new_tokens": 512,
+      "temperature": 1.0,
+      "reward_clip": 10.0
+    },
+    "inference": {
+      "max_total_tokens": 512,
+      "default_max_new_tokens": 200,
+      "default_temperature": 0.8,
+      "default_top_p": 0.92,
+      "default_top_k": 50,
+      "default_repetition_penalty": 1.05,
+      "quantize": false,
+      "max_concurrent_requests": 4,
+      "request_timeout_seconds": 120.0
+    },
+    "schema_version": 2
+  },
+  "tokenizer_hash": "daaee7e9305e952d6d27effa17223277d239498f18d1886055a4f948a65c2f70",
+  "has_ema": false,
+  "best_val_loss": null,
+  "val_loss": null,
+  "raw_weights_val_loss": 4.012504428625107,
+  "weights_source": "ema",
+  "n_parameters": 6491808,
+  "exported_from": "/home/claude/work/run/checkpoints/pretrained_small",
+  "exported_checkpoint": "step_2250",
+  "description": "AsterWhite-small: 6.5M-parameter attention-only decoder, EMA weights at step 2250 of 3000 (lowest held-out perplexity), trained on public-domain English fiction (Project Gutenberg via NLTK). See MODEL_CARD.md.",
+  "model_name": "AsterWhite",
+  "schema_version": 1,
+  "tensor_file": "model.safetensors",
+  "tensor_checksum_sha256": "6087f9328841e0128918b1a7eaad08382f615f27a9a2d43291e26b755710b9d7",
+  "tensor_aliases": {
+    "model.lm_head.weight": "model.tok_emb.weight"
+  },
+  "saved_at_utc": "2026-10-19T02:32:00Z"
+}

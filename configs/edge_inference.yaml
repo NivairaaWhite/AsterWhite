@@ -1,0 +1,22 @@
+# Small model + dynamic INT8 quantization (asterwhite.inference.quantization)
+# for a single-request, resource-constrained deployment target (e.g. a
+# small VM, an on-prem box with no GPU).
+#
+# This is NOT the same as a mobile/ONNX export to CoreML/NNAPI/QNN/
+# XNNPACK -- those runtimes need the target platform to build and verify
+# against, which this repository's CPU-only sandbox cannot do. See
+# README.md's scope notes.
+extends: tiny_cpu
+device: cpu
+
+inference:
+  quantize: true
+  max_total_tokens: 1024
+  default_max_new_tokens: 128
+  max_concurrent_requests: 1
+  request_timeout_seconds: 30.0
+
+notes: >
+  Single concurrent request by design at this tier -- raise
+  max_concurrent_requests only after measuring actual memory headroom on
+  the target device.

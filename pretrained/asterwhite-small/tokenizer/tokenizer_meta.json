@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "vocab_size": 4096,
+  "hash_sha256": "daaee7e9305e952d6d27effa17223277d239498f18d1886055a4f948a65c2f70",
+  "control_tokens": [
+    "<|bos|>",
+    "<|eos|>",
+    "<|pad|>",
+    "<|unk|>",
+    "<|beat|>",
+    "<|/beat|>",
+    "<|character|>",
+    "<|/character|>",
+    "<|scene|>",
+    "<|/scene|>",
+    "<|revision|>",
+    "<|/revision|>",
+    "<|tool|>",
+    "<|/tool|>",
+    "<|safety|>",
+    "<|/safety|>"
+  ]
+}

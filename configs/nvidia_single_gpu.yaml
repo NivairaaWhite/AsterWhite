@@ -1,0 +1,30 @@
+# Tier 2/3: single NVIDIA GPU (8-80+GB). Flash-Attention-2/3 dispatch is
+# automatic via torch's scaled_dot_product_attention on supported
+# hardware/torch builds -- no separate flash-attn package required.
+extends: base
+device: cuda
+
+backbone:
+  qk_norm: true            # cheap (2 small RMSNorms/attention layer); real stability win at this scale
+  mtp_n_future_tokens: 2    # Gloeckle et al. parallel-head MTP: better training signal + enables
+                             # self-speculative decoding at inference (asterwhite.inference.speculative)
+
+training:
+  batch_size: 32
+  micro_batch_size: 4
+  amp_dtype: bf16
+  checkpoint_dir: ./checkpoints/nvidia_single_gpu
+  compile_model: true       # only actually attempted on device=cuda -- see TrainingConfig.compile_model's docstring
+  ema_decay: 0.999          # near-free; most modern pretraining recipes serve the EMA weights, not raw last-step
+
+inference:
+  max_total_tokens: 8192
+
+notes: >
+  Run asterwhite.core.autosizer.estimate_memory against your actual GPU's
+  reported total_memory_bytes before committing to a long run -- 8GB and
+  80GB cards are both "cuda" but need very different batch/model sizing.
+  MoE is NOT enabled at this tier: MoE's extra PARAMETERS (not extra
+  compute/token) need to fit somewhere, and a single GPU has nowhere to
+  shard them -- see multi_gpu_fsdp.yaml, where FSDP sharding makes MoE's
+  larger parameter count practical.

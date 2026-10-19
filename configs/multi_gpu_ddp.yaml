@@ -1,0 +1,21 @@
+# Multi-GPU, single machine, DistributedDataParallel (full model replica
+# per GPU -- simpler and faster than FSDP when the model comfortably fits
+# in one GPU's memory).
+#
+# Launch:
+#   torchrun --nproc_per_node=<N> train.py pretrain --profile multi_gpu_ddp --data ...
+#
+# Falls back to single-process if launched without torchrun (setup_distributed
+# no-ops to rank=0/world_size=1 when the RANK env var is absent).
+extends: nvidia_single_gpu
+device: cuda
+
+training:
+  distributed_strategy: ddp
+  batch_size: 128
+  checkpoint_dir: ./checkpoints/multi_gpu_ddp
+
+notes: >
+  data_pipeline.StreamingRecordDataset now shards by (rank, worker) jointly
+  (see _shards_for_this_worker) -- each rank's DataLoader workers see a
+  disjoint slice of the data instead of every rank re-reading everything.

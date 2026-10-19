@@ -1,0 +1,17 @@
+# Serving-side profile for asterwhite.serving: full precision, higher
+# concurrency budget, request timeout tuned for interactive use rather
+# than batch throughput.
+extends: nvidia_single_gpu
+device: cuda
+
+inference:
+  max_total_tokens: 8192
+  default_max_new_tokens: 512
+  quantize: false
+  max_concurrent_requests: 32
+  request_timeout_seconds: 30.0
+
+notes: >
+  Pair with deploy/docker-compose.yml's `serving` service. Model/tokenizer
+  are selected at serve-time via --checkpoint-dir / --tokenizer-dir, not
+  baked into this profile.

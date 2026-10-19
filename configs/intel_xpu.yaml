@@ -1,0 +1,16 @@
+# Intel GPUs via the XPU backend (requires a torch build with native XPU
+# support, e.g. intel-extension-for-pytorch or torch >= 2.5's built-in
+# xpu support). NOT hardware-validated in this repository's CPU-only test
+# environment -- DeviceManager.self_test() is what catches a broken
+# install at startup instead of failing deep into a training run.
+extends: base
+device: xpu
+
+training:
+  amp_dtype: bf16
+  checkpoint_dir: ./checkpoints/intel_xpu
+
+notes: >
+  Distributed collectives on XPU are backend-dependent; DeviceManager
+  reports "gloo" conservatively -- confirm your torch/XPU build's actual
+  supported collective backend before multi-device XPU training.

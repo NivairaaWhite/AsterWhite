@@ -1,0 +1,66 @@
+# Profile that produced the bundled pretrained model (pretrained/asterwhite-small).
+#
+# ~6.5M parameters, attention-only ("A" pattern), 512-token context, 4096-token
+# byte-level BPE vocabulary. Sized so that real pretraining on a 2-core CPU
+# finishes in about an hour -- this is a small, genuinely trained demonstration
+# model, NOT a frontier-scale one; see pretrained/asterwhite-small/MODEL_CARD.md
+# for what it can and cannot do.
+#
+# Why attention-only: even with the chunked exact scan (core/ssm.py), the
+# selective-SSM block ("S") is still roughly 10x slower than attention on CPU,
+# which would have turned a one-hour run into a day. The hybrid "ASSA" pattern
+# remains the default for the larger profiles.
+# Why dropout 0.0: dropout here is applied inside scaled_dot_product_attention,
+# which makes PyTorch fall back to its slow math kernel on CPU (~2.5x slower);
+# regularization comes from weight decay + validation-based checkpoint choice.
+extends: base
+device: cpu
+
+backbone:
+  vocab_size: 4096
+  d_model: 288
+  n_layers: 6
+  n_heads: 6
+  n_kv_heads: 2
+  d_ff: 768
+  max_seq_len: 512
+  dropout: 0.0
+  layer_pattern: "A"
+  tie_word_embeddings: true
+
+narrative:
+  world_state_dim: 128
+  character_dim: 64
+  plan_dim: 128
+  max_plan_beats: 32
+
+training:
+  batch_size: 8
+  micro_batch_size: 8
+  learning_rate: 1.0e-3
+  weight_decay: 0.1
+  warmup_steps: 150
+  max_steps: 3000
+  amp_dtype: fp32
+  checkpoint_every: 500
+  eval_every: 250
+  log_every: 20
+  ema_decay: 0.998
+  checkpoint_dir: ./checkpoints/pretrained_small
+
+inference:
+  max_total_tokens: 1024
+  default_max_new_tokens: 200
+  default_temperature: 0.8
+  default_top_p: 0.92
+  default_top_k: 50
+  default_repetition_penalty: 1.05
+  max_concurrent_requests: 4
+  request_timeout_seconds: 120.0
+
+notes: >
+  Reproduce with:
+    python scripts/prepare_corpus.py --out ./data
+    python train.py tokenizer train --data ./data/train --vocab-size 4096 --out ./tokenizer
+    python train.py pretrain --profile pretrained_small --tokenizer-dir ./tokenizer \
+        --data ./data/train --val-data ./data/val

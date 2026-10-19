@@ -1,0 +1,42 @@
+[project]
+name = "asterwhite"
+version = "1.0.0"
+description = "AsterWhite: a from-scratch, trainable narrative-generation architecture, shipped with a small pretrained demo model."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "torch>=2.2",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "tokenizers>=0.20",
+    "safetensors>=0.4",
+    "pyyaml>=6.0",
+    "pydantic>=2.6",
+    "psutil>=5.9",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "prometheus-client>=0.20",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "httpx>=0.27"]
+
+[project.scripts]
+asterwhite = "train:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["train", "data_pipeline", "generation_orchestrator", "universe_tracker", "agent_simulation"]
+packages = ["asterwhite", "asterwhite.core", "asterwhite.narrative", "asterwhite.training",
+            "asterwhite.alignment", "asterwhite.utils", "asterwhite.registry", "asterwhite.tokenization",
+            "asterwhite.inference", "asterwhite.safety", "asterwhite.observability", "asterwhite.serving",
+            "asterwhite.data"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

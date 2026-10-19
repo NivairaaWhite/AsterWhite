@@ -1,0 +1,95 @@
+# Starting-point Kubernetes manifests for asterwhite.serving.
+#
+# NOT verified against a live cluster (this repository's development
+# environment has no Kubernetes control plane) -- review resource
+# requests/limits, the image reference, and the checkpoint volume source
+# against your actual cluster before applying. In particular:
+#   - `image:` below is a placeholder; push deploy/Dockerfile's build to
+#     your registry and update it.
+#   - The checkpoint/tokenizer volumes assume a ReadOnlyMany-capable
+#     PersistentVolumeClaim (e.g. NFS, EFS, Filestore) already populated
+#     by a separate training/export step -- this manifest does not train
+#     or populate one.
+#   - No Ingress/TLS termination is included; front this Service with
+#     whatever your cluster already uses for that.
+#   - The image already contains the bundled pretrained model
+#     (pretrained/asterwhite-small). This manifest is written for serving
+#     YOUR OWN trained checkpoint from the two PVCs below. To serve just the
+#     bundled model instead, delete the ASTERWHITE_SERVE_CHECKPOINT_DIR /
+#     ASTERWHITE_SERVE_TOKENIZER_DIR env entries, the two volumeMounts and
+#     the two volumes. Either way the architecture is read from the
+#     checkpoint itself and inference.max_total_tokens is capped to its
+#     context length, so production_inference's larger limits are safe.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asterwhite-serving
+  labels: { app: asterwhite-serving }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: asterwhite-serving }
+  template:
+    metadata:
+      labels: { app: asterwhite-serving }
+    spec:
+      containers:
+        - name: asterwhite-serving
+          image: REPLACE_ME/asterwhite:cpu   # or :gpu -- see deploy/Dockerfile
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ASTERWHITE_SERVE_PROFILE
+              value: production_inference
+            - name: ASTERWHITE_SERVE_DEVICE
+              value: auto
+            - name: ASTERWHITE_SERVE_CHECKPOINT_DIR
+              value: /data/checkpoint
+            - name: ASTERWHITE_SERVE_TOKENIZER_DIR
+              value: /data/tokenizer
+            - name: ASTERWHITE_JSON_LOGS
+              value: "1"
+            - name: ASTERWHITE_API_KEYS
+              valueFrom:
+                secretKeyRef: { name: asterwhite-api-keys, key: keys }
+          volumeMounts:
+            - { name: checkpoint, mountPath: /data/checkpoint, readOnly: true }
+            - { name: tokenizer, mountPath: /data/tokenizer, readOnly: true }
+          resources:
+            requests: { cpu: "1", memory: 2Gi }
+            limits: { cpu: "2", memory: 4Gi }
+          readinessProbe:
+            httpGet: { path: /ready, port: 8000 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: checkpoint
+          persistentVolumeClaim: { claimName: asterwhite-checkpoint-pvc }
+        - name: tokenizer
+          persistentVolumeClaim: { claimName: asterwhite-tokenizer-pvc }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: asterwhite-serving
+spec:
+  selector: { app: asterwhite-serving }
+  ports:
+    - { port: 80, targetPort: 8000 }
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: asterwhite-serving
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: asterwhite-serving }
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }

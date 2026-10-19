@@ -1,0 +1,39 @@
+# docker compose -f deploy/docker-compose.yml up --build
+#
+# Serves the bundled pretrained model (pretrained/asterwhite-small) out of the box -- nothing to
+# mount, nothing to train first:
+#     docker compose -f deploy/docker-compose.yml up --build
+#
+# To serve YOUR OWN model instead, uncomment the three marked lines: point them at a checkpoint (or
+# `train.py export` bundle) directory on the host. Its stored config supplies the architecture; a
+# tokenizer/ folder inside it is picked up automatically (or mount one separately and set
+# ASTERWHITE_SERVE_TOKENIZER_DIR).
+
+services:
+  serving:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      ASTERWHITE_SERVE_DEVICE: auto
+      # ASTERWHITE_SERVE_CHECKPOINT_DIR: /data/model                  # <- 1 of 3: serve your own model
+      # ASTERWHITE_SERVE_PROFILE: production_inference                # optional: override serving settings
+      # ASTERWHITE_API_KEYS: "changeme1,changeme2"                    # uncomment to require auth
+      ASTERWHITE_JSON_LOGS: "1"
+    # volumes:                                                         # <- 2 of 3
+    #   - ../pretrained/mymodel:/data/model:ro                         # <- 3 of 3
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # Optional: scrape /metrics locally. Point Prometheus at this compose
+  # file's `serving` service (http://serving:8000/metrics) via a
+  # prometheus.yml scrape_config -- not included here since a real
+  # deployment's Prometheus is normally a separately-managed service, not
+  # something this project should own.
